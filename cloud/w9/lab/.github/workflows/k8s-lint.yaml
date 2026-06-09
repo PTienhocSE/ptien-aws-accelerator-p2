@@ -1,0 +1,46 @@
+name: 🔍 K8s Manifests Linter
+
+on:
+  push:
+    branches:
+      - main
+      - master
+    paths:
+      - 'cloud/w9/lab/manifests/**.yaml'
+      - 'cloud/w9/lab/manifests/**.yml'
+  pull_request:
+    branches:
+      - main
+      - master
+    paths:
+      - 'cloud/w9/lab/manifests/**.yaml'
+      - 'cloud/w9/lab/manifests/**.yml'
+
+jobs:
+  lint:
+    name: 🛠️ Lint Manifests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Checkout Code
+        uses: actions/checkout@v4
+
+      - name: 🐍 Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: 📦 Install YAMLLint & kube-linter
+        run: |
+          pip install yamllint
+          curl -sSfL https://github.com/stackrox/kube-linter/releases/download/v0.6.8/kube-linter-linux.tar.gz | tar -xz
+          sudo mv kube-linter /usr/local/bin/
+
+      - name: 📝 Run YAMLLint
+        run: |
+          yamllint -d "{extends: relaxed, rules: {line-length: disable, document-start: disable}}" cloud/w9/lab/manifests/
+
+      - name: 🛡️ Run Kube-Linter (Security & Best Practices)
+        run: |
+          kube-linter lint cloud/w9/lab/manifests/
+        continue-on-error: true

@@ -1,0 +1,69 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: app-slo-burn-rate-alerts
+  namespace: monitoring
+  labels:
+    role: alert-rules
+    release: prometheus
+spec:
+  groups:
+    - name: w9-slo-alerts
+      rules:
+        # ==========================================
+        # 1. RECORDING RULES (Tỷ lệ lỗi theo cửa sổ)
+        # ==========================================
+        - record: job:slo_errors_per_request:ratio_rate5m
+          expr: |
+            sum(rate(http_requests_total{status=~"5.."}[5m]))
+            /
+            sum(rate(http_requests_total[5m]))
+        
+        - record: job:slo_errors_per_request:ratio_rate30m
+          expr: |
+            sum(rate(http_requests_total{status=~"5.."}[30m]))
+            /
+            sum(rate(http_requests_total[30m]))
+
+        - record: job:slo_errors_per_request:ratio_rate1h
+          expr: |
+            sum(rate(http_requests_total{status=~"5.."}[1h]))
+            /
+            sum(rate(http_requests_total[1h]))
+
+        - record: job:slo_errors_per_request:ratio_rate6h
+          expr: |
+            sum(rate(http_requests_total{status=~"5.."}[6h]))
+            /
+            sum(rate(http_requests_total[6h]))
+
+        # ==========================================
+        # 2. ALERTING RULES (Cảnh báo thông minh)
+        # ==========================================
+        # Cảnh báo Fast Burn (Burn Rate > 14.4)
+        - alert: ErrorBudgetFastBurn
+          expr: |
+            job:slo_errors_per_request:ratio_rate1h > (14.4 * 0.001)
+            and
+            job:slo_errors_per_request:ratio_rate5m > (14.4 * 0.001)
+          for: 2m
+          labels:
+            severity: critical
+            channel: pagerduty
+          annotations:
+            summary: "Error budget is burning fast (Burn Rate > 14.4)"
+            description: "Ngân sách lỗi đang bị đốt nhanh. Tỷ lệ lỗi vượt quá 1.44% liên tục trong 1h và 5m gần nhất."
+
+        # Cảnh báo Slow Burn (Burn Rate > 6.0)
+        - alert: ErrorBudgetSlowBurn
+          expr: |
+            job:slo_errors_per_request:ratio_rate6h > (6.0 * 0.001)
+            and
+            job:slo_errors_per_request:ratio_rate30m > (6.0 * 0.001)
+          for: 15m
+          labels:
+            severity: warning
+            channel: slack
+          annotations:
+            summary: "Error budget is burning slowly (Burn Rate > 6.0)"
+            description: "Ngân sách lỗi đang bị tiêu hao từ từ. Tỷ lệ lỗi vượt quá 0.6% liên tục trong 6h và 30m gần nhất."

@@ -1,0 +1,863 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AWS Web Application Dashboard</title>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        :root {
+            --bg-color: #0b0f19;
+            --card-bg: rgba(20, 26, 45, 0.45);
+            --card-border: rgba(255, 255, 255, 0.08);
+            --primary-glow: rgba(56, 189, 248, 0.15);
+            --secondary-glow: rgba(139, 92, 246, 0.15);
+            --accent-blue: #38bdf8;
+            --accent-purple: #8b5cf6;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --success: #10b981;
+            --error: #ef4444;
+            --warning: #f59e0b;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            background-image: 
+                radial-gradient(circle at 10% 20%, var(--primary-glow) 0%, transparent 40%),
+                radial-gradient(circle at 90% 80%, var(--secondary-glow) 0%, transparent 40%);
+            background-attachment: fixed;
+            color: var(--text-main);
+            min-height: 100vh;
+            padding: 40px 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        h1, h2, h3, h4 {
+            font-family: 'Outfit', sans-serif;
+        }
+
+        .container {
+            max-width: 1200px;
+            width: 100%;
+        }
+
+        /* Header Style */
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 40px;
+            border-bottom: 1px solid var(--card-border);
+            padding-bottom: 24px;
+            animation: fadeInDown 0.6s ease-out;
+        }
+
+        .header-title h1 {
+            font-size: 2.2rem;
+            font-weight: 800;
+            background: linear-gradient(to right, var(--accent-blue), var(--accent-purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 6px;
+        }
+
+        .header-title p {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+        }
+
+        .badge-tf {
+            background: rgba(56, 189, 248, 0.1);
+            border: 1px solid rgba(56, 189, 248, 0.2);
+            color: var(--accent-blue);
+            padding: 8px 16px;
+            border-radius: 999px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 4px 12px rgba(56, 189, 248, 0.05);
+        }
+
+        /* Dashboard Grid Layout */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+            margin-bottom: 40px;
+            animation: fadeInUp 0.8s ease-out;
+        }
+
+        @media (max-width: 900px) {
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Glassmorphic Card Style */
+        .card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 20px;
+            padding: 30px;
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.25);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: linear-gradient(to right, var(--accent-blue), transparent);
+            opacity: 0.4;
+        }
+
+        .card-purple::before {
+            background: linear-gradient(to right, var(--accent-purple), transparent);
+        }
+
+        .card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 20px 45px rgba(0, 0, 0, 0.35);
+            border-color: rgba(255, 255, 255, 0.15);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+
+        .card-header h2 {
+            font-size: 1.35rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .card-header h2 i {
+            color: var(--accent-blue);
+        }
+
+        .card-purple .card-header h2 i {
+            color: var(--accent-purple);
+        }
+
+        /* Info Items */
+        .info-list {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .info-item {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+        }
+
+        .info-item:last-child {
+            border-bottom: none;
+            padding-bottom: 0;
+        }
+
+        .info-label {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-muted);
+            font-weight: 600;
+        }
+
+        .info-value {
+            font-size: 0.95rem;
+            font-family: monospace;
+            word-break: break-all;
+            color: #e2e8f0;
+        }
+
+        /* Status Indicator */
+        .status-panel {
+            display: flex;
+            gap: 16px;
+            margin-top: 20px;
+        }
+
+        .status-badge {
+            flex: 1;
+            padding: 16px;
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            text-align: center;
+        }
+
+        .status-icon {
+            font-size: 1.5rem;
+            margin-bottom: 4px;
+        }
+
+        .status-text {
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            padding: 4px 10px;
+            border-radius: 6px;
+        }
+
+        .state-active {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--success);
+        }
+
+        .state-inactive {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--error);
+            animation: pulse-glow-red 2s infinite;
+        }
+
+        .state-pending {
+            background: rgba(245, 158, 11, 0.1);
+            color: var(--warning);
+        }
+
+        /* Form Controls */
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            margin-bottom: 6px;
+            text-transform: uppercase;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 12px 16px;
+            border-radius: 10px;
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px solid var(--card-border);
+            color: var(--text-main);
+            font-family: inherit;
+            font-size: 0.9rem;
+            transition: border-color 0.3s, box-shadow 0.3s;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--accent-blue);
+            box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.15);
+        }
+
+        textarea.form-control {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        /* Buttons */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 12px 20px;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            border: none;
+            font-family: inherit;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent-blue) 0%, #0284c7 100%);
+            color: #fff;
+            box-shadow: 0 4px 15px rgba(56, 189, 248, 0.2);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(56, 189, 248, 0.35);
+            filter: brightness(1.1);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, var(--accent-purple) 0%, #6d28d9 100%);
+            color: #fff;
+            box-shadow: 0 4px 15px rgba(139, 92, 246, 0.2);
+        }
+
+        .btn-secondary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(139, 92, 246, 0.35);
+            filter: brightness(1.1);
+        }
+
+        .btn-danger {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+            color: var(--error);
+            padding: 6px 12px;
+            font-size: 0.8rem;
+            border-radius: 6px;
+        }
+
+        .btn-danger:hover {
+            background: var(--error);
+            color: white;
+        }
+
+        /* Database Logs Table */
+        .logs-container {
+            max-height: 250px;
+            overflow-y: auto;
+            border: 1px solid var(--card-border);
+            border-radius: 10px;
+            background: rgba(0, 0, 0, 0.15);
+            margin-top: 15px;
+        }
+
+        .logs-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85rem;
+            text-align: left;
+        }
+
+        .logs-table th {
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.02);
+            border-bottom: 1px solid var(--card-border);
+            color: var(--text-muted);
+            font-weight: 600;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .logs-table td {
+            padding: 12px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+            color: #cbd5e1;
+        }
+
+        .logs-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .logs-table tr:hover {
+            background: rgba(255, 255, 255, 0.01);
+        }
+
+        /* File Explorer */
+        .file-list {
+            margin-top: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            max-height: 250px;
+            overflow-y: auto;
+            padding-right: 4px;
+        }
+
+        .file-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 16px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--card-border);
+            border-radius: 10px;
+            font-size: 0.85rem;
+        }
+
+        .file-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .file-info i {
+            color: var(--accent-purple);
+            font-size: 1.1rem;
+        }
+
+        .file-meta {
+            color: var(--text-muted);
+            font-size: 0.75rem;
+            margin-top: 2px;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 30px;
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .empty-state i {
+            font-size: 2rem;
+            opacity: 0.3;
+        }
+
+        /* Animations */
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes pulse-glow-red {
+            0%, 100% {
+                box-shadow: 0 0 0 rgba(239, 68, 68, 0);
+            }
+            50% {
+                box-shadow: 0 0 8px rgba(239, 68, 68, 0.4);
+            }
+        }
+
+        /* Scrollbar Styling */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.1);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 99px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header>
+            <div class="header-title">
+                <h1>AWS Web Application Portal</h1>
+                <p>Modern 3-Tier Infrastructure Stack with Remote Backend Configuration</p>
+            </div>
+            <div class="badge-tf">
+                <i class="fa-solid fa-cubes"></i> Terraform Automated
+            </div>
+        </header>
+
+        <!-- Main Grid -->
+        <div class="dashboard-grid">
+            
+            <!-- VPC & Resource Details -->
+            <div class="card">
+                <div class="card-header">
+                    <h2><i class="fa-solid fa-network-wired"></i> Infrastructure Topology</h2>
+                </div>
+                <ul class="info-list">
+                    <li class="info-item">
+                        <span class="info-label">Current Region</span>
+                        <span class="info-value">{{ system_info.aws_region }}</span>
+                    </li>
+                    <li class="info-item">
+                        <span class="info-label">RDS Database Host (MySQL)</span>
+                        <span class="info-value">{{ system_info.db_host }}</span>
+                    </li>
+                    <li class="info-item">
+                        <span class="info-label">S3 Static Assets Bucket</span>
+                        <span class="info-value">{{ system_info.s3_bucket }}</span>
+                    </li>
+                </ul>
+
+                <div class="status-panel">
+                    <div class="status-badge">
+                        <i class="fa-solid fa-database status-icon" style="color: var(--accent-blue)"></i>
+                        <span class="status-text">RDS Database</span>
+                        <span id="rds-indicator" class="indicator state-pending">
+                            <i class="fa-solid fa-spinner fa-spin"></i> Checking
+                        </span>
+                    </div>
+                    <div class="status-badge">
+                        <i class="fa-solid fa-box-archive status-icon" style="color: var(--accent-purple)"></i>
+                        <span class="status-text">S3 Bucket</span>
+                        <span id="s3-indicator" class="indicator state-pending">
+                            <i class="fa-solid fa-spinner fa-spin"></i> Checking
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- S3 File Explorer -->
+            <div class="card card-purple">
+                <div class="card-header">
+                    <h2><i class="fa-solid fa-folder-open"></i> S3 Asset Explorer</h2>
+                    <button id="upload-btn" class="btn btn-secondary btn-sm" onclick="triggerS3Upload()">
+                        <i class="fa-solid fa-cloud-arrow-up"></i> Upload Test File
+                    </button>
+                </div>
+                
+                <div class="file-list" id="s3-file-list">
+                    <div class="empty-state">
+                        <i class="fa-solid fa-spinner fa-spin"></i>
+                        <span>Listing files from S3 bucket...</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Guestbook Logs (Database interaction) -->
+            <div class="card" style="grid-column: span 2;">
+                <div class="card-header">
+                    <h2><i class="fa-solid fa-book-open"></i> RDS Database Guestbook (Visits Log)</h2>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 30px;">
+                    <!-- Input form -->
+                    <form id="visit-form" onsubmit="submitVisit(event)">
+                        <div class="form-group">
+                            <label for="visitor_name">Your Name</label>
+                            <input type="text" id="visitor_name" class="form-control" placeholder="Enter guest name" required autocomplete="off">
+                        </div>
+                        <div class="form-group">
+                            <label for="visitor_msg">Message / Comment</label>
+                            <textarea id="visitor_msg" class="form-control" placeholder="Enter message to store in MySQL" required></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary" style="width: 100%;">
+                            <i class="fa-solid fa-paper-plane"></i> Write to RDS
+                        </button>
+                    </form>
+
+                    <!-- Table showing logs -->
+                    <div>
+                        <h3 style="font-size: 1rem; margin-bottom: 10px; color: var(--text-muted)">Latest entries in RDS:</h3>
+                        <div class="logs-container">
+                            <table class="logs-table">
+                                <thead>
+                                    <tr>
+                                        <th style="width: 80px;">ID</th>
+                                        <th style="width: 150px;">Name</th>
+                                        <th>Message</th>
+                                        <th style="width: 150px;">Time</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="db-logs-body">
+                                    <tr>
+                                        <td colspan="4" class="empty-state" style="padding: 40px;">
+                                            <i class="fa-solid fa-spinner fa-spin"></i>
+                                            <span>Loading guestbook logs...</span>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Script Logic -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            fetchStatus();
+            fetchDbLogs();
+            fetchS3Files();
+        });
+
+        // Fetch Live Connection Status
+        function fetchStatus() {
+            fetch('/api/status')
+                .then(res => res.json())
+                .then(data => {
+                    const rdsInd = document.getElementById('rds-indicator');
+                    if (data.db_connected) {
+                        rdsInd.className = 'indicator state-active';
+                        rdsInd.innerHTML = '<i class="fa-solid fa-circle-check"></i> Connected';
+                    } else {
+                        rdsInd.className = 'indicator state-inactive';
+                        rdsInd.innerHTML = '<i class="fa-solid fa-circle-xmark"></i> Offline';
+                        rdsInd.title = data.db_error || 'Unknown database error';
+                    }
+
+                    const s3Ind = document.getElementById('s3-indicator');
+                    if (data.s3_connected) {
+                        s3Ind.className = 'indicator state-active';
+                        s3Ind.innerHTML = '<i class="fa-solid fa-circle-check"></i> Authorized';
+                    } else {
+                        s3Ind.className = 'indicator state-inactive';
+                        s3Ind.innerHTML = '<i class="fa-solid fa-circle-xmark"></i> Unauthorized';
+                        s3Ind.title = data.s3_error || 'Unknown S3 error';
+                    }
+                })
+                .catch(err => {
+                    console.error('Error fetching status:', err);
+                    document.getElementById('rds-indicator').className = 'indicator state-inactive';
+                    document.getElementById('rds-indicator').innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> Error';
+                    document.getElementById('s3-indicator').className = 'indicator state-inactive';
+                    document.getElementById('s3-indicator').innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> Error';
+                });
+        }
+
+        // Fetch Database Logs
+        function fetchDbLogs() {
+            const tableBody = document.getElementById('db-logs-body');
+            fetch('/api/logs')
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success && data.logs && data.logs.length > 0) {
+                        tableBody.innerHTML = data.logs.map(log => `
+                            <tr>
+                                <td>#${log.id}</td>
+                                <td style="font-weight: 600; color: var(--accent-blue)">${escapeHtml(log.visitor_name)}</td>
+                                <td>${escapeHtml(log.message)}</td>
+                                <td style="font-size: 0.75rem; color: var(--text-muted);">${log.visit_time}</td>
+                            </tr>
+                        `).join('');
+                    } else {
+                        tableBody.innerHTML = `
+                            <tr>
+                                <td colspan="4" class="empty-state">
+                                    <i class="fa-solid fa-database" style="opacity: 0.3; font-size: 1.5rem;"></i>
+                                    <span>No guestbook records found. Add the first one!</span>
+                                </td>
+                            </tr>
+                        `;
+                    }
+                })
+                .catch(err => {
+                    console.error('Error fetching logs:', err);
+                    tableBody.innerHTML = `
+                        <tr>
+                            <td colspan="4" class="empty-state" style="color: var(--error)">
+                                <i class="fa-solid fa-triangle-exclamation"></i>
+                                <span>Failed to fetch records from RDS. Check configuration.</span>
+                            </td>
+                        </tr>
+                    `;
+                });
+        }
+
+        // Write new record to database
+        function submitVisit(e) {
+            e.preventDefault();
+            const nameInput = document.getElementById('visitor_name');
+            const msgInput = document.getElementById('visitor_msg');
+            
+            const payload = {
+                visitor_name: nameInput.value,
+                message: msgInput.value
+            };
+
+            fetch('/api/logs', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(payload)
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    nameInput.value = '';
+                    msgInput.value = '';
+                    fetchDbLogs();
+                    fetchStatus(); // Refresh status check
+                } else {
+                    alert('Error writing to RDS: ' + data.error);
+                }
+            })
+            .catch(err => {
+                console.error('Submit visit error:', err);
+                alert('Connection failure writing to database.');
+            });
+        }
+
+        // Fetch S3 Files
+        function fetchS3Files() {
+            const listContainer = document.getElementById('s3-file-list');
+            fetch('/api/s3-files')
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success && data.files && data.files.length > 0) {
+                        listContainer.innerHTML = data.files.map(file => `
+                            <div class="file-item">
+                                <div class="file-info">
+                                    <i class="fa-solid fa-file-lines"></i>
+                                    <div>
+                                        <div style="font-weight: 500;">${escapeHtml(file.key)}</div>
+                                        <div class="file-meta">Size: ${file.size} bytes | Uploaded: ${file.last_modified}</div>
+                                    </div>
+                                </div>
+                                <button class="btn btn-danger btn-sm" onclick="deleteS3File('${escapeJs(file.key)}')">
+                                    <i class="fa-solid fa-trash-can"></i>
+                                </button>
+                            </div>
+                        `).join('');
+                    } else {
+                        listContainer.innerHTML = `
+                            <div class="empty-state">
+                                <i class="fa-solid fa-folder-open"></i>
+                                <span>Static assets bucket is empty.</span>
+                            </div>
+                        `;
+                    }
+                })
+                .catch(err => {
+                    console.error('Error listing S3 files:', err);
+                    listContainer.innerHTML = `
+                        <div class="empty-state" style="color: var(--error)">
+                            <i class="fa-solid fa-triangle-exclamation"></i>
+                            <span>Failed to query S3 bucket files.</span>
+                        </div>
+                    `;
+                });
+        }
+
+        // Generate and upload random file to S3
+        function triggerS3Upload() {
+            const uploadBtn = document.getElementById('upload-btn');
+            uploadBtn.disabled = true;
+            uploadBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Uploading...';
+
+            const phrases = [
+                "Terraform has deployed this file automatically.",
+                "Flask + S3 is a match made in cloud heaven.",
+                "Static assets belong in an object storage like S3.",
+                "Security groups isolate resources properly in VPCs."
+            ];
+            const content = phrases[Math.floor(Math.random() * phrases.length)] + "\nCreated at: " + new Date().toLocaleString();
+
+            fetch('/api/s3-upload', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ content: content })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    fetchS3Files();
+                    fetchStatus(); // Refresh status check
+                } else {
+                    alert('S3 Upload failed: ' + data.error);
+                }
+            })
+            .catch(err => {
+                console.error('S3 upload error:', err);
+                alert('Network connection error uploading to S3.');
+            })
+            .finally(() => {
+                uploadBtn.disabled = false;
+                uploadBtn.innerHTML = '<i class="fa-solid fa-cloud-arrow-up"></i> Upload Test File';
+            });
+        }
+
+        // Delete file from S3
+        function deleteS3File(filename) {
+            if (!confirm('Are you sure you want to delete ' + filename + ' from S3?')) return;
+
+            fetch('/api/s3-delete', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ filename: filename })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    fetchS3Files();
+                } else {
+                    alert('Delete failed: ' + data.error);
+                }
+            })
+            .catch(err => {
+                console.error('Delete error:', err);
+                alert('Connection failure during file deletion.');
+            });
+        }
+
+        // Helper functions to prevent XSS
+        function escapeHtml(str) {
+            return str.replace(/&/g, "&amp;")
+                      .replace(/</g, "&lt;")
+                      .replace(/>/g, "&gt;")
+                      .replace(/"/g, "&quot;")
+                      .replace(/'/g, "&#039;");
+        }
+
+        function escapeJs(str) {
+            return str.replace(/\\/g, '\\\\')
+                      .replace(/'/g, "\\'")
+                      .replace(/"/g, '\\"');
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,66 @@
+name: ☁️ Terraform Infrastructure CI/CD
+
+on:
+  push:
+    branches:
+      - main
+      - master
+    paths:
+      - 'cloud/w9/lab/**.tf'
+  pull_request:
+    branches:
+      - main
+      - master
+    paths:
+      - 'cloud/w9/lab/**.tf'
+
+env:
+  AWS_REGION: ap-southeast-1
+  TF_VERSION: 1.7.0
+
+jobs:
+  terraform:
+    name: ⚙️ Terraform Plan & Apply
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Checkout Code
+        uses: actions/checkout@v4
+
+      - name: 🔑 Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: 🛠️ Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+
+      - name: 🔍 Terraform Format Check
+        run: terraform fmt -check cloud/w9/lab/
+
+      - name: ⚙️ Terraform Init
+        run: |
+          cd cloud/w9/lab/
+          terraform init
+
+      - name: 📝 Terraform Validate
+        run: |
+          cd cloud/w9/lab/
+          terraform validate -no-color
+
+      - name: 📊 Terraform Plan
+        id: plan
+        if: github.event_name == 'pull_request'
+        run: |
+          cd cloud/w9/lab/
+          terraform plan -no-color
+
+      - name: 🚀 Terraform Apply
+        if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master' && github.event_name == 'push'
+        run: |
+          cd cloud/w9/lab/
+          terraform apply -auto-approve

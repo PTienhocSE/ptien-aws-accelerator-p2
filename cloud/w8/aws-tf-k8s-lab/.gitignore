@@ -1,0 +1,21 @@
+# Local .terraform directories (contains downloaded providers)
+**/.terraform/*
+
+# .tfstate files (contains resource metadata and sensitive values)
+*.tfstate
+*.tfstate.*
+
+# Crash log files
+crash.log
+crash.*.log
+
+# Override files (contains sensitive inputs or environment specific values)
+*.tfvars
+*.tfvars.json
+
+# Ignore CLI configuration files
+.terraformrc
+terraform.rc
+
+# Ignore generated SSH private keys (CRITICAL: prevent leaking security keys to GitHub!)
+minikube-key.pem
